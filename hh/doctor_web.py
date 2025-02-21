@@ -1,7 +1,7 @@
 
 
 from typing import Union
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 import inspect
 
 
@@ -84,7 +84,7 @@ class DB(MethodRegistry):
     def FIND(self, value: str):
         value_hashcode = hash(value)
         if not (count_vars := self.values.get(value_hashcode)):
-            return f"{value} is no in db"
+            return f"{value} отсутствует в базе данных"
 
         count_vars: DB_value_model = count_vars.ref_count
 
@@ -133,6 +133,11 @@ def main(db: DB, debug_str: str = None):
         except EOFError:
             print('bye.')
             break
+        except ValueError:
+            msg = 'Неверный формат команды. Введите help, чтобы узнать доступные комапды.'
+            print(msg)
+            if debug_str:
+                break
 
     return 1
 
@@ -141,7 +146,7 @@ def processing_command(db: DB, user_input: str):
     args = user_input.split()
     command = str(args[0]).upper()
     if not (command_info := db.get_command_info(command)):
-        print(f"Неизвестная команда: {command}")
+        raise ValueError(f"Неизвестная команда: {command}")
 
     func = command_info['func']
     requied_args = inspect.getfullargspec(func).args[1:]
@@ -175,7 +180,7 @@ if __name__ == '__main__':
             'Find 10', 'Unset A', 'Find 10', 'End'
         ]
 
-        for test_command in test_commands[3:]:
+        for test_command in test_commands[1:]:
             main(db, test_command)
         ...
     else:
